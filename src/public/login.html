@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ログイン</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="auth-bg">
+  <main class="auth-wrap">
+    <section class="auth-card panel">
+      <header class="auth-head">
+        <div class="brand-dot"></div>
+        <h1 class="auth-title">サインイン</h1>
+        <p class="auth-sub">アカウントにアクセスするにはログインしてください</p>
+      </header>
+
+      <form id="login-form" class="auth-form">
+        <label class="input-group">
+          <span class="input-label">ユーザーID</span>
+          <div class="input-with-icon">
+            <svg viewBox="0 0 24 24" class="input-icon" aria-hidden="true">
+              <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-5 0-9 2.5-9 5.5V22h18v-2.5C21 16.5 17 14 12 14z"/>
+            </svg>
+            <input id="userId" type="text" placeholder="your_id" autocomplete="username" required />
+          </div>
+        </label>
+
+        <label class="input-group">
+          <span class="input-label">パスワード</span>
+          <div class="input-with-icon">
+            <svg viewBox="0 0 24 24" class="input-icon" aria-hidden="true">
+              <path d="M17 8h-1V6a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2Zm-6 0V6a2 2 0 1 1 4 0v2Z"/>
+            </svg>
+            <input id="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+            <button type="button" class="ghost-btn" id="togglePw" aria-label="パスワードを表示/非表示">表示</button>
+          </div>
+        </label>
+
+        <div class="auth-actions">
+          <label class="remember">
+            <input type="checkbox" id="remember" />
+            <span>次回から自動的にログイン</span>
+          </label>
+          <button type="submit" class="auth-button">ログイン</button>
+        </div>
+
+        <p id="msg" class="auth-error" role="alert" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+
+  <script type="module">
+    const form = document.querySelector('#login-form');
+    const msg = document.querySelector('#msg');
+    const togglePw = document.querySelector('#togglePw');
+    const pw = document.querySelector('#password');
+
+    togglePw.addEventListener('click', () => {
+      const show = pw.type === 'password';
+      pw.type = show ? 'text' : 'password';
+      togglePw.textContent = show ? '非表示' : '表示';
+      pw.focus();
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+      const userId = document.querySelector('#userId').value.trim();
+      const password = pw.value;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ userId, password })
+      });
+      if (!res.ok) {
+        const { error } = await res.json().catch(() => ({ error: 'ログイン失敗' }));
+        msg.textContent = error || 'ログイン失敗';
+        return;
+      }
+
+      // Rememberはこのサンプルではサーバ側保存しない（必要なら後で拡張）
+      location.href = '/';
+    });
+
+    // 既にログイン済みならトップへ
+    const me = await fetch('/api/auth/me').then(r=>r.json()).catch(()=>({user:null}));
+    if (me.user) location.href = '/';
+  </script>
+</body>
+</html>
